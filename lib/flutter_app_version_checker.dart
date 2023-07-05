@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -21,11 +22,13 @@ class AppVersionChecker {
   /// Select The marketplace of your app
   /// default will be `AndroidStore.GooglePlayStore`
   final AndroidStore androidStore;
+  final BuildContext? context;
 
   AppVersionChecker({
     this.currentVersion,
     this.appId,
     this.androidStore = AndroidStore.googlePlayStore,
+    this.context,
   });
 
   Future<AppCheckerResult> checkUpdate() async {
@@ -40,7 +43,7 @@ class AppVersionChecker {
           return await _checkPlayStore(_currentVersion, _packageName);
       }
     } else if (Platform.isIOS) {
-      return await _checkAppleStore(_currentVersion, _packageName);
+      return await _checkAppleStore(_currentVersion, _packageName, context);
     } else {
       return AppCheckerResult(_currentVersion, null, "",
           'The target platform "${Platform.operatingSystem}" is not yet supported by this package.');
@@ -48,12 +51,17 @@ class AppVersionChecker {
   }
 
   Future<AppCheckerResult> _checkAppleStore(
-      String currentVersion, String packageName) async {
+      String currentVersion, String packageName, BuildContext? context) async {
     String? errorMsg;
     String? newVersion;
     String? url;
-    var uri =
-        Uri.https("itunes.apple.com", "/lookup", {"bundleId": packageName});
+
+    var locale = RegExp(r'\_(.*)').firstMatch(Platform.localeName)?.group(1);
+
+    // log('LOCALE: $locale');
+    var uri = Uri.https("itunes.apple.com", "/${locale ?? 'SG'}/lookup",
+        {"bundleId": packageName});
+    // log(uri.toString());
     try {
       final response = await http.get(uri);
       if (response.statusCode != 200) {
@@ -67,6 +75,8 @@ class AppVersionChecker {
               "Can't find an app in the Apple Store with the id: $packageName";
         } else {
           newVersion = jsonObj['results'][0]['version'];
+          // log('payload: ' + results.toString());
+          // log(newVersion.toString());
           url = jsonObj['results'][0]['trackViewUrl'];
         }
       }
