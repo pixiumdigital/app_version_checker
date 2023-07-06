@@ -56,10 +56,10 @@ class AppVersionChecker {
     String? newVersion;
     String? url;
 
-    var locale = RegExp(r'\_(.*)').firstMatch(Platform.localeName)?.group(1);
+    var locale = RegExp(r'\_(.*)').firstMatch(Platform.localeName)?.group(1)?.toLowerCase();
 
     // log('LOCALE: $locale');
-    var uri = Uri.https("itunes.apple.com", "/${locale ?? 'SG'}/lookup",
+    var uri = Uri.https("itunes.apple.com", "/${locale ?? 'sg'}/lookup",
         {"bundleId": packageName});
     // log(uri.toString());
     try {
